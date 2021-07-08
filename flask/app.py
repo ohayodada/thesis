@@ -1,64 +1,30 @@
-from flask import Flask
+# import necessary libraies
+from flask import Flask, render_template, Response
 from markupsafe import escape
-from flask import url_for
-from flask import render_template
+import cv2
 
+# Initialize the flask app
 app = Flask(__name__)
+camera = cv2.VideoCapture(0)
 
-@app.route("/")
-def hello_world():
-    return "<p>Hello, World!</p>"
-
-# @app.route('/')
-# def index():
-#     return 'Index Page'
-
-# @app.route('/hello')
-# def hello():
-#     return 'Hello, World'
-
-# @app.route('/user/<username>')
-# def show_user_profile(username):
-#     # show the user profile for that user
-#     return f'User {escape(username)}'
-
-# @app.route('/post/<int:post_id>')
-# def show_post(post_id):
-#     # show the post with the given id, the id is an integer
-#     return f'Post {post_id}'
-
-# @app.route('/path/<path:subpath>')
-# def show_subpath(subpath):
-#     # show the subpath after /path/
-#     return f'Subpath {escape(subpath)}'
-
-# @app.route('/projects/')
-# def projects():
-#     return 'The project page'
-
-# @app.route('/about')
-# def about():
-#     return 'The about page'
+def gen_frames():  
+    while True:
+        success, frame = camera.read()  # read the camera frame
+        if not success:
+            break
+        else:
+            ret, buffer = cv2.imencode('.jpg', frame)
+            frame = buffer.tobytes()
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # concat frame one by one and show result
 
 @app.route('/')
 def index():
-    return 'index'
+    return render_template('index.html')
 
-@app.route('/login')
-def login():
-    return 'login'
+@app.route('/video_feed')
+def video_feed():
+    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/user/<username>')
-def profile(username):
-    return f'{username}\'s profile'
-
-@app.route('/hello/')
-@app.route('/hello/<name>')
-def hello(name=None):
-    return render_template('hello.html', name=name)
-
-with app.test_request_context():
-    print(url_for('index'))
-    print(url_for('login'))
-    print(url_for('login', next='/'))
-    print(url_for('profile', username='John Doe'))
+if __name__ == "__main__":
+    app.run(debug=True)
