@@ -22,6 +22,14 @@ def gen_frames():
 def index():
     return render_template('index.html')
 
+@app.route('/simple')
+def simple():
+    return render_template('simple.html')
+
+@app.route('/mappping')
+def mapping():
+    return render_template('mapping.html')
+
 @app.route('/video_feed')
 def video_feed():
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
